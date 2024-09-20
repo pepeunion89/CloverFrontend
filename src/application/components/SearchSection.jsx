@@ -189,7 +189,21 @@ export const SearchSection = () => {
   const [monto, setMonto] = useState('');
   const [sellResponse, setSellResponse] = useState();
   const [paymentId, setPaymentId] = useState('');
+  const [lastCloverToken, setLastCloverToken] = useState(''); 
+
   const urlCloverToken = 'https://sandbox.dev.clover.com/oauth/merchants/350REZA62F0T1?client_id=T663FGQ2S6V60&packageName=UNKNOWN';
+
+  const getLastCloverToken = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/getLastToken');
+      const data = await response.json();
+      setLastCloverToken(data.cloverToken);
+      setCloverID(data.cloverToken);
+      console.log('Último token:', data.cloverToken);
+    } catch (error) {
+      console.error('Error fetching last Clover token:', error);
+    }
+  };
 
   const getResponseAndGenerateNewId = async () => {
     console.log("Idempotency: " + idempotencyID + "\n" +
@@ -201,8 +215,25 @@ export const SearchSection = () => {
   };
 
   const generateNewIdempotencyID = () => {
-    setIdempotencyID(uuidv4());
+    return new Promise((resolve) => {
+        setIdempotencyID(uuidv4());
+        resolve();
+        console.log("GENERO EL IDEMPOTENCY");
+    });
   };
+
+
+  const handleGenerateBearer = () => {
+    return new Promise((resolve) => {
+        window.open(urlCloverToken, '_blank', 'width=600,height=600,resizable=0');
+        setTimeout(() => {
+            getLastCloverToken();
+            resolve();
+            console.log("GENERO EL CLOVER ID");
+        }, 3000);
+    });
+  };
+
 
   const getResponse = async () => {
     const options1 = {
@@ -256,43 +287,54 @@ export const SearchSection = () => {
     }
   };
 
+  // CONFIRMACION DEL PAGO ------------------------------------------------------------
   const confirmPayment = async (paymentId) => {
     
-    generateNewIdempotencyID();
+    await generateNewIdempotencyID()
+    .then(() => handleGenerateBearer())
+    .then(() => new Promise(resolve => setTimeout(resolve, 5000)))
+    .then(() => executeCapture(paymentId))
+    .catch(err => {
+      console.error('Error en el flujo de confirmación:', err);
+    });
+   
+  };
+  
 
-
-    // VER ahora como generar un nuevo clover ID que lo generamos con el boton de Generar, 
-    // y poder colocarlo en la confirmacion de la compra
+  const executeCapture = async (paymentId) => {
+    console.log("ENTRA EN CAPTURE");
     const options2 = {
       method: 'POST',
       headers: {
         accept: 'application/json',
         'X-Clover-Device-Id': 'C045LQ34660687',
         'X-POS-Id': 'Clover Flex',
-        'Idempotency-Key': idempotencyID,
+        'Idempotency-Key': idempotencyID, // Asegúrate de que este sea el nuevo idempotencyID
         'content-type': 'application/json',
-        authorization: `Bearer ${cloverID}`
+        authorization: `Bearer ${cloverID}` // Asegúrate de que este sea el nuevo cloverID
       },
       body: JSON.stringify({ amount: monto })
     };
-
+  
+    console.log('Idempotency-Key:' + idempotencyID + '\n' +
+                'authorization:' + `Bearer ${cloverID}` + '\n' +
+                'monto:' + monto + '\n'
+    );
+  
     try {
       const response = await fetch(`https://sandbox.dev.clover.com/connect/v1/payments/${paymentId}/capture`, options2);
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
       const data = await response.json();
-      console.log("PAGO FINALIZADO");
+      window.alert("PAGO FINALIZADO");
       console.log(data);
     } catch (err) {
       console.error('Error finishing payment', err);
     }
   };
 
-  const handleGenerateBearer = () => {
-    window.open(urlCloverToken, '_blank', 'width=600,height=600');
-  };
-
+  
   const onCloverBaererChanged = ({ target }) => {
     setCloverID(target.value);
   };
@@ -311,15 +353,16 @@ export const SearchSection = () => {
           <Typography variant='h5'>
             Idempotency-Key
           </Typography>
-          <Typography sx={{ background: 'lightyellow', fontWeight: 'bold', padding: '1rem' }}>
+          <Typography className='idempotency-token' sx={{ background: 'lightyellow', fontWeight: 'bold', padding: '1rem' }}>
             {idempotencyID}
           </Typography>
         </Box>
         <Box className='caja generate-clover-baerer'>
           <Button onClick={handleGenerateBearer}>GENERATE CLOVER BAERER</Button>
-          <TextField onChange={onCloverBaererChanged}
-            value={cloverID}
-            sx={{ background: 'lightyellow', fontWeight: 'bold' }} />
+          <Typography className='clover-token' onChange={onCloverBaererChanged}
+            sx={{ background: 'lightyellow', fontWeight: 'bold' }}>   
+            {cloverID}  
+          </Typography> 
         </Box>
         <Box className='caja monto-container'>
           <Typography variant='h5'>
