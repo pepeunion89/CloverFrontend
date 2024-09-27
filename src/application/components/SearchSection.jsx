@@ -28,6 +28,7 @@ export const SearchSection = () => {
         const result = await response.json();
         setBankList(result); // Guarda los datos de bancos
         setLoadingBankList(false); // Desactiva el estado de carga
+        console.log(result);
       } catch (error) {
         console.error('Error fetching SQL data:', error);
         setLoadingBankList(false); // Desactiva el estado de carga si hay error
@@ -50,6 +51,7 @@ export const SearchSection = () => {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
       const result = await response.json();
+      console.log(result);
       setBankDiscounts(result); // Guarda los descuentos obtenidos
       setLoadingDiscounts(false); // Desactiva el loading
       
@@ -309,7 +311,7 @@ export const SearchSection = () => {
                         key={idx}
                       >
                         <Box sx={{ width: '50%', backgroundColor: '#e9ebf7', textIndent: '0.5rem', lineHeight: '1.9rem' }}>
-                          {discount.Descripcion}
+                          {discount.Banco}
                         </Box>
                         <Box sx={{ width: '25%', textAlign: 'center' }}>
                           {discount.Cuota}
