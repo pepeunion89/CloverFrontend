@@ -3,10 +3,9 @@ import { AppBar, Grid2, IconButton, Toolbar, Typography, Box } from "@mui/materi
 
 export const NavBar = () => {
   return (
-   <AppBar sx={{backgroundColor:'#f2f8fc', position:'absolute'}}>
+   <AppBar sx={{position:'relative', display:'flex', flexDirection:'column', backgroundColor:'#f2f8fc'}}>
 
-        <Toolbar 
-            className="Toolbar-container"            
+        <Toolbar                         
             sx={{display: 'flex', justifyContent: 'space-between', height:'100px'}}>
             <IconButton color='inherit' edge="start" sx={{
                 mr: 2, display: {sm:'none'}

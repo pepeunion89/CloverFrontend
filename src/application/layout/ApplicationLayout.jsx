@@ -5,9 +5,9 @@ import { NavBar } from "../components";
 
 const ApplicationLayout = ({children}) => {
   return (
-    <Box sx={{display: 'flex'}}>
+    <Box className='ApplicationLayout' sx={{padding:'0px'}}>
         <NavBar />
-        <Box component='main' sx={{flexGrow: 1, p:3, mt:7}} >
+        <Box className='AL-Container' >
           {children}
         </Box>
     </Box>
