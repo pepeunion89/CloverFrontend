@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
 import { useState, useEffect } from 'react';
-import { BINsearch, BanksContainer, PaymentForm } from './';
+import { BINsearch, BanksContainer, DemoParametersPayment, PaymentForm } from './';
 
 export const SearchSection = () => {  
   const [canProceed, setCanProceed] = useState(false);
@@ -10,11 +10,18 @@ export const SearchSection = () => {
   const [bankSelected, setBankSelected] = useState();
   const [bin, setBin] = useState('');
   const [bankList, setBankList] = useState([]); // Estado para la lista de bancos
+
+     //LAS BOOLEANAS PARA MOSTRAR LOS COMPONENTES
+  const [boolDemo, setBoolDemo] = useState(true);
+  const [boolBINSearch, setBoolBINSearch] = useState(false);
+  const [boolPaymentForm, setBoolPaymentForm] = useState(false);
+
+
  
   // Obtener la lista de bancos desde SQL al cargar el componente
   useEffect(() => {
     const fetchBankList = async () => {
-      try {
+      try {    
         const response = await fetch('http://localhost:3000/sql/getBankList');
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -39,21 +46,23 @@ export const SearchSection = () => {
   return (
     <>
       <Box className="Search-container" sx={{ p: 0, margin:'0 auto'}}>
-        <BINsearch canProceed={canProceed} 
+        {boolDemo ? <DemoParametersPayment setBoolDemo={setBoolDemo} setBoolBINSearch={setBoolBINSearch} bankList={bankList}/> : ''}
+        {boolBINSearch ? <BINsearch setBoolBINSearch={setBoolBINSearch} setBoolPaymentForm={setBoolPaymentForm}
+                    canProceed={canProceed} 
                     setCanProceed={setCanProceed} 
                     bankDiscounts={bankDiscounts} 
                     setBankDiscounts={setBankDiscounts} 
                     binValue={bin} 
-                    setBinValue={setBin}/>        
-        <BanksContainer canProceed={canProceed} 
+                    setBinValue={setBin}/> : ''}        
+        {boolBINSearch ? <BanksContainer canProceed={canProceed} 
                         setLoadingBankList={setLoadingBankList} 
                         setBankSelected={setBankSelected} 
                         setShowSaleForm={setShowSaleForm} 
                         bankDiscounts={bankDiscounts} 
-                        bankList={bankList}/>
-        <PaymentForm bankDiscounts={bankDiscounts} 
+                        bankList={bankList}/> : ''}
+        {boolPaymentForm ? <PaymentForm bankDiscounts={bankDiscounts} 
                       bankSelected={bankSelected} 
-                      showSaleForm={showSaleForm}/>        
+                      showSaleForm={showSaleForm}/> : ''}       
       </Box>
     </>
   );

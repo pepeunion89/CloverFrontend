@@ -4,4 +4,5 @@ export * from './SearchSection';
 export * from './BINsearch';
 export * from './BanksContainer';
 export * from './PaymentForm';
+export * from './DemoParametersPayment';
 

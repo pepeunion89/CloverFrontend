@@ -94,6 +94,7 @@ export const PaymentForm = ({bankDiscounts, bankSelected, showSaleForm}) => {
   return (
     <>
         <Box 
+            className='animate__animated animate__fadeIn'
             sx={{
                 width: '400px', 
                 margin: '20px auto', 
@@ -101,7 +102,6 @@ export const PaymentForm = ({bankDiscounts, bankSelected, showSaleForm}) => {
                 borderRadius: '8px', 
                 boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)', 
                 backgroundColor: '#fff',
-                display: showSaleForm ? 'block' : 'none'
             }}
         >
             <Typography variant="h5" align="center" sx={{ marginBottom: '20px', color: '#1976d2' }}>

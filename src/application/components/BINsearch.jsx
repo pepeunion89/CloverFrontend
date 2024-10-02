@@ -2,7 +2,7 @@ import { Typography, Box, TextField } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { useState } from 'react';
 
-export const BINsearch = ({canProceed, setCanProceed, setBankDiscounts, binValue, setBinValue}) => {
+export const BINsearch = ({setBoolBINSearch, setBoolPaymentForm, canProceed, setCanProceed, setBankDiscounts, binValue, setBinValue}) => {
 
   const [bankName, setBankName] = useState();  
     // Obtener el nombre del banco y si es crédito, buscar los descuentos
@@ -24,11 +24,15 @@ export const BINsearch = ({canProceed, setCanProceed, setBankDiscounts, binValue
     try {
       const response = await fetch(url, options);
       const result = await response.json(); 
+      
+      setBoolBINSearch(false);
+
       setBankName(result.BIN.issuer.name);
       
       if (result.BIN.type === "CREDIT") {
-        setCanProceed(true);
-        getBanksDiscount(); // Llamar a la función para obtener los descuentos
+        //setCanProceed(true);
+        //getBanksDiscount(); // Llamar a la función para obtener los descuentos
+        setBoolPaymentForm(true);
       } else {
         setCanProceed(false);
       }
