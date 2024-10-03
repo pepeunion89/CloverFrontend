@@ -1,6 +1,7 @@
 import { Box } from '@mui/material';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { BINsearch, BanksContainer, DemoParametersPayment, PaymentForm } from './';
+import { PaymentContext } from './PaymentContext';
 
 export const SearchSection = () => {  
   const [canProceed, setCanProceed] = useState(false);
@@ -15,7 +16,6 @@ export const SearchSection = () => {
   const [boolDemo, setBoolDemo] = useState(true);
   const [boolBINSearch, setBoolBINSearch] = useState(false);
   const [boolPaymentForm, setBoolPaymentForm] = useState(false);
-
 
  
   // Obtener la lista de bancos desde SQL al cargar el componente
@@ -62,7 +62,8 @@ export const SearchSection = () => {
                         bankList={bankList}/> : ''}
         {boolPaymentForm ? <PaymentForm bankDiscounts={bankDiscounts} 
                       bankSelected={bankSelected} 
-                      showSaleForm={showSaleForm}/> : ''}       
+                      showSaleForm={showSaleForm}
+                      bankList={bankList}/> : ''}       
       </Box>
     </>
   );

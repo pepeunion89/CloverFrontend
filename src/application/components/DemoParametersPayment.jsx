@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { Box, Button, MenuItem, TextField, Typography, InputAdornment, OutlinedInput } from '@mui/material';
+import { PaymentContext } from './PaymentContext';
 
 
 export const DemoParametersPayment = ({setBoolDemo, setBoolBINSearch, bankList}) => {
@@ -7,13 +8,16 @@ export const DemoParametersPayment = ({setBoolDemo, setBoolBINSearch, bankList})
     const [offerList, setOfferList] = useState([]);
     const [selectedBank, setSelectedBank] = useState('');
     const [selectedOffer, setSelectedOffer] = useState('');
-    const [initialAmount, setInitialAmount] = useState(0.00); // Ejemplo de monto inicial
-    const [finalAmount, setFinalAmount] = useState(initialAmount);
+    const {initialAmount, setInitialAmount, 
+            finalAmount, setFinalAmount, 
+            descripcionPlan, setDescripcionPlan, 
+            cuotas, setCuotas,
+            selectedBankContext, setSelectedBankContext} = useContext(PaymentContext); // Ejemplo de monto inicial// Context
 
- 
     const onSelectedBank = async(e)=>{
 
         setSelectedBank(e.target.value);
+        setSelectedBankContext(selectedBank);
 
         try {    
             const response = await fetch(`http://localhost:3000/sql/getBankOffer/${e.target.value}`); // Cambia por tu API real
@@ -51,6 +55,8 @@ export const DemoParametersPayment = ({setBoolDemo, setBoolBINSearch, bankList})
 
         if(initialAmount>0){
             setFinalAmount(initialAmount*(1-(parseInt(offer.Variacion)/(-100))));
+            setDescripcionPlan(offer.Descripcion);
+            setCuotas(offer.Cuota);
         }      
 
     }
