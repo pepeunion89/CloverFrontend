@@ -10,13 +10,14 @@ export const PaymentForm = ({ bankDiscounts, showSaleForm, bankList }) => {
   const [paymentMethods, setPaymentMethods] = useState([]); // Para múltiples métodos de pago
   const { setPaymentData, finalAmount, setFinalAmount, 
           descripcionPlan, setDescripcionPlan, 
-          cuotas, setCuotas } = useContext(PaymentContext);
+          cuotas, setCuotas,
+          variacion, setVariacion } = useContext(PaymentContext);
   const [finalAmountFixed, setFinalAmountFixed] = useState(0);
   let sumaDeMontos = 0;
 
   const fetchBankOffers = async (bankId, index) => {
     try {    
-      const response = await fetch(`http://localhost:3000/sql/getBankOffer/${bankId}`); // Cambia por tu API real
+      const response = await fetch(`http://192.168.0.100:3000/sql/getBankOffer/${bankId}`); // Cambia por tu API real
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }            
@@ -38,7 +39,7 @@ export const PaymentForm = ({ bankDiscounts, showSaleForm, bankList }) => {
     setPaymentMethods([
       {
         monto: finalAmount,
-        installments: 1,
+        installments: cuotas,
         isFixed: true, // Esta tarjeta no será editable
         idempotencyID: uuidv4(), // Genera un ID único por tarjeta
         isPaid: false, // Para trackear si está paga
@@ -50,11 +51,16 @@ export const PaymentForm = ({ bankDiscounts, showSaleForm, bankList }) => {
   }, []);
 
   const handlePayment = async () => {
+    let firstEntry = true;
     for (let i = 0; i < paymentMethods.length; i++) {
       console.log(paymentMethods[i]);
-      /*const method = paymentMethods[i];
+      const method = paymentMethods[i];
       if (!method.isPaid) {
         try {
+          if(firstEntry){
+            method.monto = finalAmount;
+            firstEntry = false;
+          }
           // Enviar el fetch POST por cada tarjeta
           await processPayment(method);
           // Marcar la tarjeta como pagada
@@ -67,37 +73,39 @@ export const PaymentForm = ({ bankDiscounts, showSaleForm, bankList }) => {
           console.error('Error procesando el pago:', error);
           break;
         }
-      }*/
+      }
     }
   };
 
   const processPayment = async (method) => {
     const options = {
-      method: 'POST',
-      headers: {
-        accept: 'application/json',
-        'X-Clover-Device-Id': 'C045LQ34660687',
-        'X-POS-Id': 'Clover Flex',
-        'Idempotency-Key': method.idempotencyID,
-        'content-type': 'application/json',
-        authorization: `Bearer 12f6a5fd-d7be-5c58-5964-b6fb74d9f5a8`,
-      },
-      body: JSON.stringify({
-        capture: true,
-        deviceOptions: {
-          cardEntryMethods: ['MAG_STRIPE', 'EMV', 'NFC'],
+        method: 'POST',
+        headers: {
+            accept: 'application/json',
+            'X-Clover-Device-Id': 'C045LQ34660687',
+            'X-POS-Id': 'Clover Flex',
+            'Idempotency-Key': method.idempotencyID,
+            'content-type': 'application/json',
+            authorization: `Bearer 12f6a5fd-d7be-5c58-5964-b6fb74d9f5a8`,
         },
-        final: true,
-        regionalExtras: {
-          argentina: {
-            invoiceNumber: `FACT-${method.idempotencyID.slice(-6)}`,
-            numInstallments: method.installments,
-          },
-        },
-        amount: method.monto,
-        externalPaymentId: `PAY-${method.idempotencyID.slice(-12)}`,
-      }),
+        body: JSON.stringify({
+            capture: true,
+            deviceOptions: {
+                cardEntryMethods: ['MAG_STRIPE', 'EMV', 'NFC'],
+            },
+            final: true,
+            regionalExtras: {
+                argentina: {
+                    invoiceNumber: `FACT-${method.idempotencyID.slice(-6)}`,
+                    numInstallments: method.installments,
+                },
+            },
+            amount: method.monto * 100, // Multiplicar el monto por 100 para enviar en centavos
+            externalPaymentId: `PAY-${method.idempotencyID.slice(-12)}`,
+        }),
     };
+
+    //ACA PREGUNTAR SI HAY UN PAGO EN PROCESO, SI LO HAY, ESPERAR A FINALIZAR ESE PAGO, SINO QUE SE HAGA EL FETCH DEL PAGO
 
     const response = await fetch('https://sandbox.dev.clover.com/connect/v1/payments', options);
     const data = await response.json();
@@ -110,7 +118,7 @@ export const PaymentForm = ({ bankDiscounts, showSaleForm, bankList }) => {
     setPaymentMethods((prev) => [
       ...prev,
       {
-        monto: 0,
+        monto: 1,
         installments: 1,
         isFixed: false,
         idempotencyID: uuidv4(),
@@ -122,25 +130,32 @@ export const PaymentForm = ({ bankDiscounts, showSaleForm, bankList }) => {
   };
 
   const updatePaymentMethod = (index, field, value) => {
+    console.log(value);
     setPaymentMethods((prevMethods) => {
-      const updatedMethods = [...prevMethods];
-      updatedMethods[index][field] = value;
+        const updatedMethods = [...prevMethods];
+        
+        // Si el campo es 'monto', reemplazamos coma por punto
+        if (field === 'monto') {
+            value = value.replace(',', '.'); // Reemplazar coma por punto
+            updatedMethods[index][field] = value;
+        } else {
+            updatedMethods[index][field] = value;
+        }
 
+        // Recalcular suma de montos no fijos
+        if (field === 'monto') {
+            sumaDeMontos = 0;
+            updatedMethods.forEach((method) => {
+                if (!method.isFixed) {
+                    sumaDeMontos += method.monto;
+                }
+            });
+            setFinalAmount(finalAmountFixed - sumaDeMontos); // Multiplicar por 100
+        }
 
-      if(field=='monto'){
-        sumaDeMontos = 0;
-        console.log(typeof(sumaDeMontos));
-        updatedMethods.forEach((method)=>{
-          if(!method.isFixed){
-            sumaDeMontos += parseFloat(method.monto);
-          }
-        });
-  
-        setFinalAmount(finalAmountFixed-sumaDeMontos);
-      }
-      return updatedMethods;
+        return updatedMethods;
     });
-  };
+};
 
   const removePaymentMethod = (index) => {
     // Eliminar el método de pago basado en su índice, si no es el primero
@@ -209,11 +224,16 @@ export const PaymentForm = ({ bankDiscounts, showSaleForm, bankList }) => {
                     onChange={(e) => updatePaymentMethod(index, 'installments', e.target.value)}
                     label="Cuotas"
                   >
-                    {method.offerList.map((bankDiscount, idx) => (
-                        <MenuItem key={idx} value={bankDiscount.Cuota}>
-                          {bankDiscount.Cuota} Cuotas
-                        </MenuItem>
-                    ))}
+                    {method.offerList.map((bankDiscount, idx) => {
+                      if((-(bankDiscount.Variacion))>=(-(variacion))){
+                        return(
+                          <MenuItem key={idx} value={bankDiscount.Cuota}>
+                            {bankDiscount.Cuota} Cuotas
+                          </MenuItem>                        
+                        );
+                      }
+                        return null;
+                    })}
                   </Select>
                 </FormControl>
 

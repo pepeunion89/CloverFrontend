@@ -4,10 +4,11 @@ export const PaymentContext = createContext();
 
 export const PaymentProvider = ({ children }) => {
   const [paymentData, setPaymentData] = useState(null);
-  const [initialAmount, setInitialAmount] = useState(0.00);
+  const [initialAmount, setInitialAmount] = useState(1.00);
   const [finalAmount, setFinalAmount] = useState(initialAmount);
   const [descripcionPlan, setDescripcionPlan] = useState();
   const [cuotas, setCuotas] = useState();
+  const [variacion, setVariacion] = useState();
   const [selectedBankContext, setSelectedBankContext] = useState();
 
   return (
@@ -16,6 +17,7 @@ export const PaymentProvider = ({ children }) => {
                                       finalAmount, setFinalAmount,
                                       descripcionPlan, setDescripcionPlan,
                                       cuotas, setCuotas,
+                                      variacion, setVariacion,
                                       selectedBankContext, setSelectedBankContext      
      }}>
       {children}

@@ -17,19 +17,19 @@ export const SearchSection = () => {
   const [boolBINSearch, setBoolBINSearch] = useState(false);
   const [boolPaymentForm, setBoolPaymentForm] = useState(false);
 
- 
+  
   // Obtener la lista de bancos desde SQL al cargar el componente
   useEffect(() => {
     const fetchBankList = async () => {
       try {    
-        const response = await fetch('http://localhost:3000/sql/getBankList');
+        const response = await fetch('http://192.168.0.100:3000/sql/getBankList');
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const result = await response.json();
+
         setBankList(result); // Guarda los datos de bancos
         setLoadingBankList(false); // Desactiva el estado de carga
-        console.log(result);
       } catch (error) {
         console.error('Error fetching SQL data:', error);
         setLoadingBankList(false); // Desactiva el estado de carga si hay error

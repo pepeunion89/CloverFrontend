@@ -1,10 +1,12 @@
 import { Typography, Box, TextField } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import { useState } from 'react';
+import { useState, useContext } from 'react';
+import { PaymentContext } from './PaymentContext';
 
 export const BINsearch = ({setBoolBINSearch, setBoolPaymentForm, canProceed, setCanProceed, setBankDiscounts, binValue, setBinValue}) => {
 
   const [bankName, setBankName] = useState();  
+  const {descripcionPlan} = useContext(PaymentContext);
     // Obtener el nombre del banco y si es crédito, buscar los descuentos
   const getBankName = async()=> {
     const url = `https://bin-ip-checker.p.rapidapi.com/?bin=${binValue}`;
@@ -24,17 +26,19 @@ export const BINsearch = ({setBoolBINSearch, setBoolPaymentForm, canProceed, set
     try {
       const response = await fetch(url, options);
       const result = await response.json(); 
-      
-      setBoolBINSearch(false);
 
       setBankName(result.BIN.issuer.name);
       
-      if (result.BIN.type === "CREDIT") {
+      if (result.BIN.type === descripcionPlan.substring(0,5) || (descripcionPlan!='DEBITO' && result.BIN.type ==='CREDIT')) {
         //setCanProceed(true);
         //getBanksDiscount(); // Llamar a la función para obtener los descuentos
+        setBoolBINSearch(false);
         setBoolPaymentForm(true);
+        console.log("ENTRO POR OKEI");
       } else {
         setCanProceed(false);
+        alert("TARJETA INVÁLIDA");        
+        console.log("ENTRO POR NIET");
       }
     } catch (error) {
       console.error(error);
@@ -44,7 +48,7 @@ export const BINsearch = ({setBoolBINSearch, setBoolPaymentForm, canProceed, set
    // Obtener los descuentos de bancos según el BIN
    const getBanksDiscount = async () => {
     try {
-      const response = await fetch('http://localhost:3000/sql/getBanksDiscount');
+      const response = await fetch('http://192.168.0.100:3000/sql/getBanksDiscount');
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
@@ -151,7 +155,7 @@ export const BINsearch = ({setBoolBINSearch, setBoolPaymentForm, canProceed, set
               onClick={getBankName}
             />
           </Box>
-          {bankName && (
+          {(bankName && canProceed) && (
             <Typography sx={{width:'516px', fontWeight:'bold', backgroundColor:'black', color:'#c5e2ff', py:'1.5rem', textAlign:'center', mt:'1rem', borderRadius:'10px'}}>
               {bankName}
             </Typography>

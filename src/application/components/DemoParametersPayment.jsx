@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useRef } from 'react';
 import { Box, Button, MenuItem, TextField, Typography, InputAdornment, OutlinedInput } from '@mui/material';
 import { PaymentContext } from './PaymentContext';
 
@@ -12,7 +12,19 @@ export const DemoParametersPayment = ({setBoolDemo, setBoolBINSearch, bankList})
             finalAmount, setFinalAmount, 
             descripcionPlan, setDescripcionPlan, 
             cuotas, setCuotas,
+            variacion, setVariacion,
             selectedBankContext, setSelectedBankContext} = useContext(PaymentContext); // Ejemplo de monto inicial// Context
+    const inputRef = useRef(null);
+
+    let debito = {
+        Activo:true,
+        Cuota: 1,
+        Descripcion:"DEBITO",
+        IdLista: 999,
+        IdTarjeta:999,
+        Orden: 999,
+        Variacion: -30
+    } 
 
     const onSelectedBank = async(e)=>{
 
@@ -20,11 +32,12 @@ export const DemoParametersPayment = ({setBoolDemo, setBoolBINSearch, bankList})
         setSelectedBankContext(selectedBank);
 
         try {    
-            const response = await fetch(`http://localhost:3000/sql/getBankOffer/${e.target.value}`); // Cambia por tu API real
+            const response = await fetch(`http://192.168.0.100:3000/sql/getBankOffer/${e.target.value}`); // Cambia por tu API real
             if (!response.ok) {
               throw new Error(`HTTP error! Status: ${response.status}`);
             }            
             const result = await response.json();
+            result.unshift(debito);
             setOfferList(result);
             console.log(result);
           } catch (error) {
@@ -33,15 +46,30 @@ export const DemoParametersPayment = ({setBoolDemo, setBoolBINSearch, bankList})
     };
         
     const onInitialAmountChanged = (e)=>{
+        const value = e.target.value;
+        console.log(value);
 
-        setInitialAmount(parseFloat(e.target.value));
-
-        if(selectedBank!='' && selectedOffer!=''){
+        if (value === '') {
+            console.log("INGRESO EN VACÍO");
+            e.target.value = 1; 
+            inputRef.current.select(); 
+            setInitialAmount(1);
+            setFinalAmount(1);
+            return; 
+        }
+    
+        const parsedValue = (value);
+        if (!isNaN(parsedValue)) {
+            setInitialAmount(parsedValue); 
+        } else {
+            console.log("Valor no válido"); 
+        }
+    
+        if (selectedBank !== '' && selectedOffer !== '') {
             onSelectOffer(selectedOffer);
-            console.log(selectedOffer);
-        }else{
-            setFinalAmount(parseFloat(e.target.value));
-        }       
+        } else {
+            setFinalAmount(parsedValue); 
+        }
 
     }
 
@@ -52,19 +80,23 @@ export const DemoParametersPayment = ({setBoolDemo, setBoolBINSearch, bankList})
     }
 
     const onSelectOffer = (offer)=>{
-
         if(initialAmount>0){
             setFinalAmount(initialAmount*(1-(parseInt(offer.Variacion)/(-100))));
             setDescripcionPlan(offer.Descripcion);
             setCuotas(offer.Cuota);
+            setVariacion(offer.Variacion);
+            console.log(offer);
+            console.log(initialAmount);
+            console.log(finalAmount);
         }      
-
     }
   
     const handleSubmit = () => {
       if(finalAmount>0){
         setBoolDemo(false);
         setBoolBINSearch(true);
+      }else{
+        alert("DEBES INGRESAR UN MONTO VÁLIDO");
       }
     };
 
@@ -90,10 +122,12 @@ export const DemoParametersPayment = ({setBoolDemo, setBoolBINSearch, bankList})
                 MONTO INICIAL:
                 </Typography>
                 <OutlinedInput
+                inputRef={inputRef}
                 value={initialAmount}
                 onChange={onInitialAmountChanged}
+                onClick={() => inputRef.current.select()}
                 startAdornment={<InputAdornment position="start">$</InputAdornment>}
-                type="number"
+                type="text"
                 sx={{ width: '200px' }}
                 />
             </Box>
